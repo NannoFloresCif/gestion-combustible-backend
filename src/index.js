@@ -15,6 +15,9 @@ const PORT = 3001;
 
 app.use(cors());
 app.use(express.json());
+app.get('/', (req, res) => {
+  res.send('API de Gestión de Combustible está en línea.');
+});
 
 app.use('/api', usuarioRoutes);
 app.use('/api', maquinariaRoutes);
