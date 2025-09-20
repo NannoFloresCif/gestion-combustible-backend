@@ -1,0 +1,460 @@
+### Crear un usuario de prueba (Jefe de Sucursal)
+POST http://localhost:3001/api/usuarios
+Content-Type: application/json
+
+{
+  "rut": "22333444-5",
+  "nombre": "Ana",
+  "apellido": "Jimenez",
+  "password": "otraClaveSegura456",
+  "id_rol": 3,
+  "id_sucursal": 2
+}
+
+
+### Crear un usuario de prueba (Jefe de Sucursal - nueva aldea)
+POST http://localhost:3001/api/usuarios
+Content-Type: application/json
+
+{
+  "rut": "44442221-5",
+  "nombre": "Carlos",
+  "apellido": "Rivero",
+  "password": "Segura456clave",
+  "id_rol": 3,
+  "id_sucursal": 9
+}
+
+
+### Crear un usuario de prueba (operador)
+POST http://localhost:3001/api/usuarios
+Content-Type: application/json
+
+{
+  "rut": "44444444-5",
+  "nombre": "Fernando",
+  "apellido": "Ortega",
+  "password": "ClaveSegura456otra",
+  "id_rol": 5,
+  "id_sucursal": 2
+}
+
+### 1. Iniciar sesión como SUPER USUARIO
+# @name loginSuperUsuario
+POST http://localhost:3001/api/login
+Content-Type: application/json
+
+{
+  "rut": "11222333-4",
+  "password": "unaClaveSegura123",
+  "id_sucursal": 10
+}
+
+### 2. Iniciar sesión como JEFE DE SUCURSAL arauco
+# @name loginJefeSucursalArauco
+POST http://localhost:3001/api/login
+Content-Type: application/json
+
+{
+  "rut": "22333444-5",
+  "password": "otraClaveSegura456",
+  "id_sucursal": 2
+}
+
+### 2. Iniciar sesión como JEFE DE SUCURSAL nueva aldea
+# @name loginJefeSucursalNuevaAldea
+POST http://localhost:3001/api/login
+Content-Type: application/json
+
+{
+  "rut": "44442221-5",
+  "password": "Segura456clave",
+  "id_sucursal": 9
+}
+
+### 3 Iniciar sesión como OPERADOR
+# @name loginOperador
+POST http://localhost:3001/api/login
+Content-Type: application/json
+
+{
+  "rut": "44444444-5",
+  "password": "ClaveSegura456otra",
+  "id_sucursal": 2
+}
+
+### =======================================
+
+### 1. Iniciar sesión para obtener el token
+# @name peticionLogin
+POST http://localhost:3001/api/login
+Content-Type: application/json
+
+{
+  "rut": "11222333-4",
+  "password": "unaClaveSegura123",
+  "id_sucursal": 10
+}
+
+### 2. Obtener perfil de usuario (PETICIÓN EXITOSA CON TOKEN)
+# Esta petición usa el token guardado de la petición anterior.
+GET http://localhost:3001/api/perfil
+Authorization: Bearer {{peticionLogin.response.body.token}}
+
+
+### 3. Obtener perfil de usuario (PETICIÓN FALLIDA SIN TOKEN)
+# Esta petición no tiene el header de autorización, por lo que debería fallar.
+GET http://localhost:3001/api/perfil
+
+
+### Obtener la lista de toda la maquinaria (protegido)
+GET http://localhost:3001/api/maquinaria
+Authorization: Bearer {{peticionLogin.response.body.token}}
+
+### Obtener una máquina específica (EXITOSO)
+GET http://localhost:3001/api/maquinaria/5
+Authorization: Bearer {{peticionLogin.response.body.token}}
+
+### Obtener una máquina que no existe (FALLIDO 404)
+GET http://localhost:3001/api/maquinaria/999
+Authorization: Bearer {{peticionLogin.response.body.token}}
+
+### Obtener maquinaria de MI sucursal (endpoint inteligente)
+GET http://localhost:3001/api/maquinaria/mi-sucursal
+Authorization: Bearer {{peticionLogin.response.body.token}}
+
+
+### 3. OBTENER MAQUINARIA (como Super Usuario)
+# Debería devolver la lista completa (137 máquinas)
+GET http://localhost:3001/api/maquinaria
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+
+### 4. OBTENER MAQUINARIA (como Jefe de Sucursal arauco)
+# Debería devolver solo las máquinas de Arauco
+GET http://localhost:3001/api/maquinaria
+Authorization: Bearer {{loginJefeSucursalArauco.response.body.token}}
+
+### 4. OBTENER MAQUINARIA (como Jefe de Sucursal nueva aldea)
+# Debería devolver solo las máquinas de Arauco
+GET http://localhost:3001/api/maquinaria
+Authorization: Bearer {{loginJefeSucursalNuevaAldea.response.body.token}}
+
+
+
+Por supuesto. Aquí está el código completo y en orden para tu archivo api.http.
+
+Este archivo está diseñado para ser ejecutado secuencialmente. Primero obtienes los tokens y luego pruebas las funcionalidades con esos tokens.
+
+Código Completo para api.http
+Instrucciones:
+
+Reemplaza todo el contenido de tu archivo api.http con el siguiente código.
+
+Asegúrate de que tu servidor esté corriendo (npm run dev).
+
+Ejecuta las peticiones en el orden en que aparecen, haciendo clic en el Send Request de cada una.
+
+HTTP
+
+### =======================================
+###  PASO 1: OBTENER TOKENS
+### =======================================
+
+### 1.1 Iniciar sesión como SUPER USUARIO (Carlos Soto)
+# @name loginSuperUsuario
+POST http://localhost:3001/api/login
+Content-Type: application/json
+
+{
+  "rut": "11222333-4",
+  "password": "unaClaveSegura123",
+  "id_sucursal": 10
+}
+
+### 1.2 Iniciar sesión como JEFE DE SUCURSAL (Ana Jimenez)
+# @name loginJefeSucursal
+POST http://localhost:3001/api/login
+Content-Type: application/json
+
+{
+  "rut": "22333444-5",
+  "password": "otraClaveSegura456",
+  "id_sucursal": 2
+}
+
+
+### =======================================
+###  PASO 2: PRUEBAS DE REGISTRO DE CONSUMO
+### =======================================
+
+### Prueba A: REGISTRAR CONSUMO (EXITOSO - Jefe en su propia sucursal)
+# Usa el token de Ana Jimenez (Jefe, rol 3, sucursal 2 - Arauco)
+# Para la máquina 1 (código 1056) que está en Arauco.
+# El surtidor de Arauco es el id 2.
+POST http://localhost:3001/api/consumos
+Authorization: Bearer {{loginJefeSucursal.response.body.token}}
+Content-Type: application/json
+
+{
+  "id_maquina": 1,
+  "horometro": 25.5,
+  "litros_cargados": 150.0,
+  "cuentalitros_surtidor": 50150.0,
+  "id_surtidor": 2 
+}
+###_____________________________________________________
+### Prueba A: REGISTRAR CONSUMO (EXITOSO - operador en su propia sucursal)
+# Usa el token de Fernando Ortega (Operador, rol 5, sucursal 2 - Arauco)
+# Para la máquina 1 (código 1056) que está en Arauco
+# El surtidor de Arauco es el id 2.
+POST http://localhost:3001/api/consumos
+Authorization: Bearer {{loginOperador.response.body.token}}
+Content-Type: application/json
+
+{
+  "id_maquina": 1,
+  "horometro": 30.0,
+  "litros_cargados": 120.0,
+  "cuentalitros_surtidor": 50270.0,
+  "id_surtidor": 2
+}
+
+
+
+### Prueba B: REGISTRAR CONSUMO (FALLIDO 403 - Jefe en otra sucursal)
+# Ana (Jefe de Arauco) intenta cargar en máquina 88 de Oficina Central.
+# Debería recibir un error 403 Forbidden.
+POST http://localhost:3001/api/consumos
+Authorization: Bearer {{loginJefeSucursal.response.body.token}}
+Content-Type: application/json
+
+{
+  "id_maquina": 88,
+  "horometro": 50,
+  "litros_cargados": 100,
+  "cuentalitros_surtidor": 50250,
+  "id_surtidor": 10
+}
+
+### Prueba C: REGISTRAR CONSUMO (FALLIDO 409 - Horómetro inválido)
+# Intentamos cargar en la máquina 1 (cuyo último horómetro ahora es 25.5 por la Prueba A) con un valor menor.
+# Debería recibir un error 409 Conflict.
+POST http://localhost:3001/api/consumos
+Authorization: Bearer {{loginJefeSucursal.response.body.token}}
+Content-Type: application/json
+
+{
+  "id_maquina": 1,
+  "horometro": 5,
+  "litros_cargados": 100,
+  "cuentalitros_surtidor": 50350,
+  "id_surtidor": 2
+}
+
+### Prueba D: REGISTRAR CONSUMO (EXITOSO - Super Usuario en cualquier sucursal)
+# Usa el token de Carlos Soto (Super Usuario).
+# Para la máquina 88 de Oficina Central (sucursal 10).
+# Debería ser exitoso.
+POST http://localhost:3001/api/consumos
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+Content-Type: application/json
+
+{
+  "id_maquina": 88,
+  "horometro": 55,
+  "litros_cargados": 200,
+  "cuentalitros_surtidor": 50550,
+  "id_surtidor": 10
+}
+
+
+### =======================================
+###  PRUEBAS DE VISUALIZACIÓN DE CONSUMOS
+### =======================================
+
+### Prueba A: Visualizar Consumos (como Jefe de Sucursal)
+# Debería devolver solo los consumos de la sucursal 2 (Arauco).
+GET http://localhost:3001/api/consumos
+Authorization: Bearer {{loginJefeSucursal.response.body.token}}
+
+
+### Prueba B: Visualizar Consumos (como Super Usuario, vista global)
+# Debería devolver TODOS los consumos registrados en el sistema.
+GET http://localhost:3001/api/consumos
+Authorization: Bearer {{loginOperador.response.body.token}}
+
+
+### Prueba C: Visualizar Consumos (como Super Usuario, filtrado)
+# Debería devolver solo los consumos de la sucursal 2 (Arauco).
+GET http://localhost:3001/api/consumos?sucursal_id=2
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+
+
+### Prueba D: Visualizar Consumos (Jefe intentando filtrar otra sucursal)
+# Debería IGNORAR el filtro ?sucursal_id=10 y devolver solo los de su propia sucursal (2).
+GET http://localhost:3001/api/consumos?sucursal_id=10
+Authorization: Bearer {{loginJefeSucursal.response.body.token}}
+
+
+### =======================================
+###  PRUEBAS DE ELIMINACIÓN DE CONSUMO
+### =======================================
+
+### Prueba A: Eliminar Consumo (EXITOSO - Jefe en su propia sucursal)
+# Reemplaza el '3' con el ID del consumo que acabas de crear.
+PATCH http://localhost:3001/api/consumos/4/eliminar
+Authorization: Bearer {{loginJefeSucursal.response.body.token}}
+
+### Prueba B: Verificar la Eliminación
+# Al volver a pedir la lista de consumos, el registro eliminado ya no debería aparecer.
+GET http://localhost:3001/api/consumos
+Authorization: Bearer {{loginJefeSucursal.response.body.token}}
+
+### Prueba C: Intentar eliminar un consumo que no existe
+# Reemplaza el '999' por un ID que no exista.
+PATCH http://localhost:3001/api/consumos/999/eliminar
+Authorization: Bearer {{loginJefeSucursal.response.body.token}}
+
+
+### =======================================
+###  PRUEBAS DEL FLUJO COMPLETO DE TRASLADO
+### =======================================
+
+### PASO A: Login de los dos Jefes de Sucursal
+# Ana (Jefe de Arauco, sucursal 2)
+
+
+# Pedro (Jefe de nueva aldea, sucursal 9) - ¡Asegúrate de haberlo creado!
+
+
+### PASO B: Ana (Arauco) solicita el traslado de la máquina 1 a Oficina Central
+POST http://localhost:3001/api/traslados
+Authorization: Bearer {{loginJefeSucursalArauco.response.body.token}}
+Content-Type: application/json
+
+{
+  "id_maquina": 2,
+  "horometro_salida": 35.0,
+  "id_sucursal_destino": 9
+}
+# Anota el "id_traslado" que te devuelve la respuesta. Ej: 1
+
+
+### PASO C: jefe nueva aldea revisa sus traslados pendientes
+# Debería ver la solicitud de la máquina 1 en la lista.
+GET http://localhost:3001/api/traslados/pendientes
+Authorization: Bearer {{loginJefeSucursalNuevaAldea.response.body.token}}
+
+
+### PASO D: jefe nueva aldea ACEPTA el traslado
+# Reemplaza el :id con el id_traslado que anotaste en el Paso B.
+PATCH http://localhost:3001/api/traslados/2/respuesta
+Authorization: Bearer {{loginJefeSucursalNuevaAldea.response.body.token}}
+Content-Type: application/json
+
+{
+  "decision": "Aceptado"
+}
+
+
+### PASO E: (Opcional) Verificar el estado de la máquina
+# La máquina 1 ahora debería pertenecer a la "Oficina Central" y estar "Activa".
+GET http://localhost:3001/api/maquinaria/1
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+
+
+### =======================================
+###  PRUEBA DE REPORTE DE DESVIACIONES
+### =======================================
+# Como Jefe de Sucursal de Arauco (sucursal 2)
+GET http://localhost:3001/api/reportes/desviaciones?fecha_inicio=2025-09-10&fecha_fin=2025-09-12
+Authorization: Bearer {{loginJefeSucursalArauco.response.body.token}}
+
+
+### =======================================
+###  PRUEBAS DE CREACIÓN DE MAQUINARIA
+### =======================================
+
+### Prueba A: Super Usuario crea una máquina (EXITOSO)
+POST http://localhost:3001/api/maquinaria
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+Content-Type: application/json
+
+{
+  "codigo_interno": "M-TEST-01",
+  "marca": "Prueba",
+  "modelo": "Test-X",
+  "tipo_combustible": "Petróleo",
+  "id_sucursal_actual": 1
+}
+
+### Prueba B: Jefe de Sucursal intenta crear una máquina (FALLIDO 403)
+POST http://localhost:3001/api/maquinaria
+Authorization: Bearer {{loginJefeSucursalArauco.response.body.token}}
+Content-Type: application/json
+
+{
+  "codigo_interno": "M-TEST-02",
+  "marca": "Prueba-Fallo",
+  "modelo": "Test-Y",
+  "tipo_combustible": "Petróleo",
+  "id_sucursal_actual": 2
+}
+
+### Prueba C: Super Usuario intenta crear máquina con código duplicado (FALLIDO 409)
+# Esta prueba debe ejecutarse DESPUÉS de la Prueba A
+POST http://localhost:3001/api/maquinaria
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+Content-Type: application/json
+
+{
+  "codigo_interno": "M-TEST-01",
+  "marca": "Otra Marca",
+  "modelo": "Otro Modelo",
+  "tipo_combustible": "Petróleo",
+  "id_sucursal_actual": 3
+}
+
+### =======================================
+###  PRUEBAS DE GESTIÓN DE USUARIOS
+### =======================================
+
+### Obtener la lista completa de usuarios (EXITOSO - como Super Usuario)
+GET http://localhost:3001/api/usuarios
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+
+### Intentar obtener la lista de usuarios (FALLIDO - como Jefe de Sucursal)
+GET http://localhost:3001/api/usuarios
+Authorization: Bearer {{loginJefeSucursalArauco.response.body.token}}
+
+
+
+### =======================================
+###  PRUEBAS DE ACTIVACIÓN/DESACTIVACIÓN DE USUARIOS
+### =======================================
+
+### 1. Desactivar al usuario "Ana Jimenez" (ID 2)
+# Como Super Usuario
+PATCH http://localhost:3001/api/usuarios/2/estado
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+Content-Type: application/json
+
+{
+  "estado": "Inactivo"
+}
+
+### 2. Verificar que el estado cambió
+# El estado ahora debe ser "Inactivo".
+GET http://localhost:3001/api/usuarios/2
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+
+
+### 3. Reactivar al usuario "Ana Jimenez" (ID 2)
+# Como Super Usuario
+PATCH http://localhost:3001/api/usuarios/2/estado
+Authorization: Bearer {{loginSuperUsuario.response.body.token}}
+Content-Type: application/json
+
+{
+  "estado": "Activo"
+}
