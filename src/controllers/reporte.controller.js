@@ -30,6 +30,38 @@ const obtenerReporteDesviaciones = async (req, res) => {
   }
 };
 
+const obtenerReporteStock = async (req, res) => {
+  try {
+    const { sucursal_id, fecha_inicio, fecha_fin } = req.query;
+    const { rol, sucursal } = req.usuario;
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json({ mensaje: 'Los parámetros de fecha son obligatorios.' });
+    }
+
+    const filtros = { fechaInicio: fecha_inicio, fechaFin: fecha_fin };
+
+    // Lógica de autorización
+    if (rol === 1) { // Super Usuario
+      if (!sucursal_id) {
+        return res.status(400).json({ mensaje: 'Como Super Usuario, debes seleccionar una sucursal.' });
+      }
+      filtros.sucursalId = sucursal_id;
+    } else { // Otros roles (Jefe y Admin)
+      filtros.sucursalId = sucursal; // Se fuerza a su propia sucursal
+    }
+
+    const reporte = await reporteModel.generarReporteStock(filtros);
+    res.status(200).json(reporte);
+
+  } catch (error) {
+    console.error("Error al generar reporte de stock:", error);
+    res.status(500).json({ mensaje: 'Error interno del servidor.' });
+  }
+};
+
+
 module.exports = {
-  obtenerReporteDesviaciones
+  obtenerReporteDesviaciones,
+  obtenerReporteStock
 };

@@ -92,10 +92,27 @@ const crear = async (maquina) => {
   }
 };
 
+const actualizar = async (id, maquina) => {
+  const { codigo_interno, marca, modelo, tipo_combustible, id_sucursal_actual } = maquina;
+  const query = `
+    UPDATE maquinaria
+    SET codigo_interno = $1, marca = $2, modelo = $3, tipo_combustible = $4, id_sucursal_actual = $5
+    WHERE id_maquina = $6
+    RETURNING *;
+  `;
+  const values = [codigo_interno, marca, modelo, tipo_combustible, id_sucursal_actual, id];
+  try {
+    const resultado = await pool.query(query, values);
+    return resultado.rows[0];
+  } catch (error) {
+    throw error;
+  }
+};
 
 module.exports = {
   obtenerTodas,
   findById,
   findBySucursalId,
-  crear
+  crear,
+  actualizar
 };

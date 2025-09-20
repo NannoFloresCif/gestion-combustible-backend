@@ -14,4 +14,6 @@ router.get('/maquinaria/:id', verificarToken, maquinariaController.obtenerMaquin
 
 router.post('/maquinaria', [verificarToken, autorizar([1])], maquinariaController.crearMaquina);
 
+router.put('/maquinaria/:id', [verificarToken, autorizar([1])], maquinariaController.actualizarMaquina);
+
 module.exports = router;

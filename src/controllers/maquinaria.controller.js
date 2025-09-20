@@ -91,9 +91,30 @@ const crearMaquina = async (req, res) => {
   }
 };
 
+
+const actualizarMaquina = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const maquinaActualizada = await maquinariaModel.actualizar(id, req.body);
+    if (!maquinaActualizada) {
+      return res.status(404).json({ mensaje: 'Máquina no encontrada.' });
+    }
+    res.status(200).json({ mensaje: 'Máquina actualizada exitosamente.', maquina: maquinaActualizada });
+  } catch (error) {
+    // Manejo de error para código interno duplicado
+    if (error.code === '23505') {
+      return res.status(409).json({ mensaje: 'Error: El código interno ya existe.' });
+    }
+    console.error("Error al actualizar máquina:", error);
+    res.status(500).json({ mensaje: 'Error interno del servidor.' });
+  }
+};
+
+
 module.exports = {
   obtenerMaquinaria,
   obtenerMaquinariaPorId,
   obtenerMaquinariaPorSucursalUsuario,
-  crearMaquina
+  crearMaquina,
+  actualizarMaquina
 };

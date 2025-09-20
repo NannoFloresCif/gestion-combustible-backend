@@ -11,4 +11,10 @@ router.get(
   reporteController.obtenerReporteDesviaciones
 );
 
+router.get(
+  '/reportes/stock',
+  [verificarToken, autorizar([1, 3, 4])],
+  reporteController.obtenerReporteStock
+);
+
 module.exports = router;
