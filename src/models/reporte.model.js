@@ -57,43 +57,41 @@ const generarReporteStock = async (filtros) => {
   // Esta consulta es avanzada. Usamos CTEs (WITH) para organizar la lógica.
   const query = `
     WITH movimientos AS (
-      -- Seleccionamos las ENTRADAS de combustible (Recepciones)
       SELECT
         r.fecha,
         'Recepción' AS tipo_movimiento,
-        r.tipo_combustible,
+        -- ✔️ CORRECCIÓN: Usamos TRIM() para limpiar espacios en blanco
+        TRIM(r.tipo_combustible) AS tipo_combustible,
         r.litros_recepcionados AS litros,
         CONCAT('Factura/Documento: ', r.valor_factura) AS detalle
       FROM recepciones_combustible r
       WHERE r.id_sucursal = $1
-        -- La comparación de fechas ahora es consistente y correcta
         AND r.fecha BETWEEN $2::date AND $3::date
 
       UNION ALL
 
-      -- Seleccionamos las SALIDAS de combustible (Consumos)
       SELECT
         c.fecha_hora AS fecha,
         'Consumo' AS tipo_movimiento,
-        m.tipo_combustible,
-        -c.litros_cargados AS litros, -- Usamos un valor negativo para las salidas
+        -- ✔️ CORRECCIÓN: Usamos TRIM() aquí también para consistencia
+        TRIM(m.tipo_combustible) AS tipo_combustible,
+        -c.litros_cargados AS litros,
         CONCAT('Máquina: ', m.codigo_interno, ' (', m.modelo, ')') AS detalle
       FROM consumos c
       JOIN maquinaria m ON c.id_maquina = m.id_maquina
       WHERE c.id_sucursal = $1
-        -- Esta es la forma más robusta de incluir el día de fin completo para timestamps
         AND c.fecha_hora >= $2::date
         AND c.fecha_hora < ($3::date + INTERVAL '1 day')
         AND c.eliminado = FALSE
     )
-    -- El cálculo del saldo acumulado sigue siendo el mismo y ahora funcionará bien
     SELECT
       fecha,
       tipo_movimiento,
       tipo_combustible,
       detalle,
       litros,
-      SUM(litros) OVER (PARTITION BY tipo_combustible ORDER BY fecha ASC) AS saldo
+      -- ✔️ CORRECCIÓN: Y finalmente, particionamos por el dato ya limpio
+      SUM(litros) OVER (PARTITION BY TRIM(tipo_combustible) ORDER BY fecha ASC) AS saldo
     FROM movimientos
     ORDER BY fecha ASC;
   `;
