@@ -56,9 +56,8 @@ const generarReporteStock = async (filtros) => {
 
   // Esta consulta es avanzada. Usamos CTEs (WITH) para organizar la lógica.
   const query = `
-    -- 1. Unimos las tablas de recepciones y consumos en una sola lista de "movimientos"
     WITH movimientos AS (
-      -- Seleccionamos las ENTRADAS de combustible
+      -- Seleccionamos las ENTRADAS de combustible (Recepciones)
       SELECT
         r.fecha,
         'Recepción' AS tipo_movimiento,
@@ -66,11 +65,13 @@ const generarReporteStock = async (filtros) => {
         r.litros_recepcionados AS litros,
         CONCAT('Factura/Documento: ', r.valor_factura) AS detalle
       FROM recepciones_combustible r
-      WHERE r.id_sucursal = $1 AND r.fecha BETWEEN $2 AND $3
+      WHERE r.id_sucursal = $1
+        -- La comparación de fechas ahora es consistente y correcta
+        AND r.fecha BETWEEN $2::date AND $3::date
 
       UNION ALL
 
-      -- Seleccionamos las SALIDAS de combustible
+      -- Seleccionamos las SALIDAS de combustible (Consumos)
       SELECT
         c.fecha_hora AS fecha,
         'Consumo' AS tipo_movimiento,
@@ -79,22 +80,25 @@ const generarReporteStock = async (filtros) => {
         CONCAT('Máquina: ', m.codigo_interno, ' (', m.modelo, ')') AS detalle
       FROM consumos c
       JOIN maquinaria m ON c.id_maquina = m.id_maquina
-      WHERE c.id_sucursal = $1 AND c.fecha_hora::date BETWEEN $2 AND $3 AND c.eliminado = FALSE
+      WHERE c.id_sucursal = $1
+        -- Esta es la forma más robusta de incluir el día de fin completo para timestamps
+        AND c.fecha_hora >= $2::date
+        AND c.fecha_hora < ($3::date + INTERVAL '1 day')
+        AND c.eliminado = FALSE
     )
-    -- 2. Seleccionamos todos los movimientos y calculamos el saldo acumulado
+    -- El cálculo del saldo acumulado sigue siendo el mismo y ahora funcionará bien
     SELECT
       fecha,
       tipo_movimiento,
       tipo_combustible,
       detalle,
       litros,
-      -- La función de ventana SUM(...) OVER(...) calcula la suma acumulada
       SUM(litros) OVER (PARTITION BY tipo_combustible ORDER BY fecha ASC) AS saldo
     FROM movimientos
     ORDER BY fecha ASC;
   `;
   // Añadimos ' 23:59:59' a la fecha de fin para incluir el día completo
-  const values = [sucursalId, fechaInicio, `${fechaFin} 23:59:59`];
+  const values = [sucursalId, fechaInicio, fechaFin];
 
   try {
     const resultado = await pool.query(query, values);
