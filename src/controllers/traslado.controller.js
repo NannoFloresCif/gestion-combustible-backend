@@ -14,30 +14,27 @@ const solicitarTraslado = async (req, res) => {
       return res.status(404).json({ mensaje: 'Máquina no encontrada.' });
     }
 
-    // La máquina debe estar 'Activa' para poder ser trasladada
     if (maquina.estado !== 'Activo') {
       return res.status(409).json({ mensaje: `La máquina no puede ser trasladada porque su estado actual es '${maquina.estado}'.` });
     }
 
-    // Autorización: El usuario debe pertenecer a la sucursal de la máquina (a menos que sea SU)
     if (rol !== 1 && maquina.id_sucursal_actual !== id_sucursal_origen) {
       return res.status(403).json({ mensaje: 'No tienes permiso para trasladar máquinas de esta sucursal.' });
     }
 
-    // Validación: El horómetro de salida debe ser válido
-    if (parseFloat(horometro) <= parseFloat(maquina.ultimo_horometro_registrado)) {
-      return res.status(409).json({ mensaje: `Error: El horómetro de salida (${horometro_salida}) no puede ser menor al último registrado (${maquina.ultimo_horometro_registrado}).` });
+    // ✔️ CORRECCIÓN: Usar 'horometro_salida' en lugar de 'horometro'
+    if (parseFloat(horometro_salida) <= parseFloat(maquina.ultimo_horometro_registrado)) {
+      return res.status(409).json({ mensaje: `Error: El horómetro de salida (${horometro_salida}) no puede ser menor o igual al último registrado (${maquina.ultimo_horometro_registrado}).` });
     }
 
-    // Validación: No se puede trasladar una máquina a su misma sucursal
     if (maquina.id_sucursal_actual === parseInt(id_sucursal_destino)) {
       return res.status(400).json({ mensaje: 'La sucursal de destino no puede ser la misma que la sucursal de origen.' });
     }
 
     // --- CREACIÓN ---
     const datosTraslado = {
-      horometro_salida, id_maquina, 
-      id_sucursal_origen, id_sucursal_destino, 
+      horometro_salida, id_maquina,
+      id_sucursal_origen, id_sucursal_destino,
       id_usuario_solicita
     };
 
